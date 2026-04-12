@@ -1,7 +1,10 @@
 use actix_web::web;
 
 mod health;
+mod progress;
 mod projects;
+mod push;
+mod samples;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -10,6 +13,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route("/metrics", web::get().to(health::metrics))
             .service(
                 web::scope("/api")
+                    // Projects
                     .route("/projects", web::get().to(projects::list_projects))
                     .route("/projects", web::post().to(projects::create_project))
                     .route("/projects/{id}", web::get().to(projects::get_project))
@@ -26,7 +30,21 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     .route(
                         "/projects/{id}/generate/podcast",
                         web::post().to(projects::generate_podcast),
-                    ),
+                    )
+                    // Progress (cross-device sync)
+                    .route(
+                        "/projects/{id}/progress",
+                        web::get().to(progress::get_progress),
+                    )
+                    .route(
+                        "/projects/{id}/progress",
+                        web::put().to(progress::update_progress),
+                    )
+                    // Samples
+                    .route("/samples/try", web::post().to(samples::try_sample))
+                    // Push notifications
+                    .route("/push/subscribe", web::post().to(push::subscribe))
+                    .route("/push/unsubscribe", web::delete().to(push::unsubscribe)),
             ),
     );
 }

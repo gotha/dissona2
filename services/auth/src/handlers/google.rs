@@ -5,6 +5,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::config::Settings;
 use crate::error::AuthError;
 use crate::jwt::JwtConfig;
 use crate::oauth::get_google_user_info;
@@ -32,6 +33,7 @@ pub async fn google_callback(
     oauth_client: web::Data<BasicClient>,
     db: web::Data<PgPool>,
     jwt_config: web::Data<JwtConfig>,
+    settings: web::Data<Settings>,
 ) -> Result<impl Responder, AuthError> {
     // Exchange code for token
     let token_result = oauth_client

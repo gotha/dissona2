@@ -60,6 +60,9 @@ async fn main() -> anyhow::Result<()> {
     let server_addr = format!("{}:{}", settings.server.host, settings.server.port);
     info!("Starting server on {}", server_addr);
 
+    // Clone settings for use in closure
+    let settings_data = web::Data::new(settings.clone());
+
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
@@ -75,6 +78,7 @@ async fn main() -> anyhow::Result<()> {
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(oauth_client.clone()))
             .app_data(web::Data::new(jwt_config.clone()))
+            .app_data(settings_data.clone())
             .configure(handlers::configure)
     })
     .bind(&server_addr)?

@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
@@ -10,7 +10,7 @@ pub struct Settings {
     pub frontend: FrontendSettings,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ServerSettings {
     #[serde(default = "default_host")]
     pub host: String,
@@ -18,14 +18,14 @@ pub struct ServerSettings {
     pub port: u16,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct DatabaseSettings {
     pub url: String,
     #[serde(default = "default_max_connections")]
     pub max_connections: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct JwtSettings {
     pub secret: String,
     #[serde(default = "default_access_token_ttl")]
@@ -34,7 +34,7 @@ pub struct JwtSettings {
     pub refresh_token_ttl_seconds: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct GoogleSettings {
     pub client_id: String,
     pub client_secret: String,
@@ -42,7 +42,7 @@ pub struct GoogleSettings {
     pub redirect_uri: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct FrontendSettings {
     #[serde(default = "default_frontend_url")]
     pub url: String,
