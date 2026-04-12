@@ -85,7 +85,8 @@ pub async fn google_callback(
 
     // Redirect to frontend with access token
     let redirect_url = format!(
-        "http://localhost:5173/auth/callback?access_token={}",
+        "{}/auth/callback?access_token={}",
+        settings.frontend.url,
         access_token
     );
 

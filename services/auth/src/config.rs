@@ -6,6 +6,8 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub jwt: JwtSettings,
     pub google: GoogleSettings,
+    #[serde(default)]
+    pub frontend: FrontendSettings,
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,6 +42,12 @@ pub struct GoogleSettings {
     pub redirect_uri: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct FrontendSettings {
+    #[serde(default = "default_frontend_url")]
+    pub url: String,
+}
+
 fn default_host() -> String {
     "0.0.0.0".to_string()
 }
@@ -62,6 +70,18 @@ fn default_refresh_token_ttl() -> u64 {
 
 fn default_redirect_uri() -> String {
     "http://localhost/auth/callback/google".to_string()
+}
+
+fn default_frontend_url() -> String {
+    "http://localhost:5173".to_string()
+}
+
+impl Default for FrontendSettings {
+    fn default() -> Self {
+        Self {
+            url: default_frontend_url(),
+        }
+    }
 }
 
 impl Settings {
