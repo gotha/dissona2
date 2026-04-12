@@ -1,0 +1,89 @@
+# Disona Frontend
+# Run `just --list` to see all available commands
+
+set dotenv-load
+
+# Default: show help
+default:
+    @just --list
+
+# ============ STANDARD COMMANDS ============
+
+# Setup: install dependencies
+setup:
+    npm ci
+
+# Build the application
+build:
+    npm run build
+
+# Run all checks (lint, typecheck)
+check: lint typecheck
+
+# Run all tests with coverage
+test:
+    npm run test -- --coverage
+
+# Clean build artifacts
+clean:
+    rm -rf dist node_modules/.cache
+
+# ============ DEVELOPMENT ============
+
+# Run development server
+run:
+    npm run dev
+
+# Run development server (alias)
+dev:
+    npm run dev
+
+# Preview production build
+preview:
+    npm run preview
+
+# ============ CODE QUALITY ============
+
+# Run linter
+lint:
+    npm run lint
+
+# Run linter and fix issues
+lint-fix:
+    npm run lint -- --fix
+
+# Type checking
+typecheck:
+    npm run typecheck
+
+# Format code (if prettier is configured)
+fmt:
+    npx prettier --write "src/**/*.{ts,tsx,css}"
+
+# Check formatting
+fmt-check:
+    npx prettier --check "src/**/*.{ts,tsx,css}"
+
+# ============ DEPENDENCIES ============
+
+# Update dependencies
+deps-update:
+    npm update
+
+# Show outdated dependencies
+deps-outdated:
+    npm outdated
+
+# Audit dependencies for vulnerabilities
+audit:
+    npm audit
+
+# ============ DOCKER ============
+
+# Build Docker image
+docker-build:
+    docker build -t disona-frontend:latest .
+
+# Run in Docker
+docker-run:
+    docker run --rm -p 3000:3000 disona-frontend:latest

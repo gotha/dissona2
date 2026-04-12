@@ -1,32 +1,68 @@
-# Dependencies
+# ============ ENVIRONMENT ============
+# Note: .env files are committed for dev configuration
+# Do NOT put production secrets in .env files
+.env.local
+.env.production
+.env.*.local
+
+# ============ DEPENDENCIES ============
 node_modules/
 .npm/
+target/
+__pycache__/
+*.pyc
+.venv/
+venv/
 
-# Build outputs
+# ============ BUILD ============
 dist/
 build/
 out/
+*.egg-info/
 
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# IDE and editor files
+# ============ IDE ============
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
 
-# OS files
+# ============ OS ============
 .DS_Store
 Thumbs.db
 
-# Logs
+# ============ LOGS ============
 *.log
 logs/
 
-# Temporary files
+# ============ MODELS (large files) ============
+models/
+*.pth
+*.onnx
+*.bin
+
+# ============ DATA ============
+data/
+*.sqlite
+*.db
+
+# ============ TEST ============
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ============ MISC ============
 tmp/
 temp/
 *.tmp
+*.bak
+
+# ============ NIX ============
+result
+.direnv/
+
+# ============ COVERAGE ============
+*.lcov
+lcov.info
+*-lcov.info

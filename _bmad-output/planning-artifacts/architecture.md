@@ -40,3 +40,57 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 | Offline | Full support required |
 | Lock Screen | MediaSession API |
 
+---
+
+## System Architecture
+
+### Services
+
+| Service | Language | Purpose |
+|---------|----------|---------|
+| API Service | Rust/Actix | Main API, database writer |
+| Auth Service | Rust/Actix | OAuth, JWT issuance |
+| PDF Worker | Python | Document parsing, chapter detection |
+| LLM Worker | Python | Summarization, segmentation |
+| TTS Worker | Python | Text-to-speech generation |
+| Frontend | React/Vite | Mobile-first PWA |
+
+### Key Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| API Language | Rust | Performance, type safety |
+| Worker Language | Python | ML ecosystem, LiteLLM |
+| Message Queue | NATS JetStream | Lightweight, durable |
+| Database | PostgreSQL (2 instances) | Auth/API isolation |
+| Storage | S3-compatible (MinIO) | Scalable, CDN-ready |
+| Auth | JWT shared secret | Stateless validation |
+
+---
+
+## Detailed Specifications
+
+See subdirectory `./architecture/` for detailed specs:
+
+### Infrastructure
+- [Database](./architecture/database.md) - PostgreSQL schema
+- [Database Diagram](./architecture/database-diagram.md) - ER diagram
+- [NATS](./architecture/nats.md) - Event streaming
+- [Storage](./architecture/storage.md) - S3/MinIO object storage
+- [LLM](./architecture/llm.md) - LiteLLM proxy
+- [Traefik](./architecture/traefik.md) - API gateway
+- [Deployment](./architecture/deployment.md) - Docker, environments
+- [Observability](./architecture/observability.md) - Logging, metrics, tracing
+- [Security](./architecture/security.md) - Auth, encryption
+- [Offline Sync](./architecture/offline-sync.md) - PWA sync strategy
+
+### Services
+- [API Service](./architecture/services/api-service.md)
+- [Auth Service](./architecture/services/auth-service.md)
+- [PDF Worker](./architecture/services/pdf-worker.md)
+- [LLM Worker](./architecture/services/llm-worker.md)
+- [TTS Worker](./architecture/services/tts-worker.md)
+
+### Frontend
+- [Frontend Architecture](./architecture/frontend/architecture.md)
+

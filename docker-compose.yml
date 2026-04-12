@@ -1,0 +1,184 @@
+# Disona Development Environment
+# Run: docker compose up -d
+
+services:
+  # ============ DATABASES ============
+
+  postgres-auth:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: disona_auth
+      POSTGRES_PASSWORD: disona_auth
+      POSTGRES_DB: disona_auth
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U disona_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-api:
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: disona
+      POSTGRES_PASSWORD: disona
+      POSTGRES_DB: disona
+    volumes:
+      - postgres-api-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U disona"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:latest
+    command: ["--jetstream", "--store_dir=/data", "--http_port=8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============ GATEWAY ============
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # ============ SERVICES (uncomment when ready) ============
+
+  # api-service:
+  #   build: ./services/api
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+  #     - "traefik.http.services.api.loadbalancer.server.port=8080"
+  #   environment:
+  #     - DATABASE_URL=postgres://disona:disona@postgres-api:5432/disona
+  #     - NATS_URL=nats://nats:4222
+  #     - S3_ENDPOINT=http://minio:9000
+  #     - S3_ACCESS_KEY=minioadmin
+  #     - S3_SECRET_KEY=minioadmin
+  #     - AUTH_SERVICE_URL=http://auth-service:8081
+  #   depends_on:
+  #     postgres-api:
+  #       condition: service_healthy
+  #     nats:
+  #       condition: service_healthy
+
+  # auth-service:
+  #   build: ./services/auth
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
+  #     - "traefik.http.services.auth.loadbalancer.server.port=8081"
+  #   environment:
+  #     - DATABASE_URL=postgres://disona_auth:disona_auth@postgres-auth:5432/disona_auth
+  #     - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-prod}
+  #     - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+  #     - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+  #   depends_on:
+  #     postgres-auth:
+  #       condition: service_healthy
+
+  # pdf-worker:
+  #   build: ./services/pdf-worker
+  #   environment:
+  #     - NATS_URL=nats://nats:4222
+  #     - S3_ENDPOINT=http://minio:9000
+  #     - S3_ACCESS_KEY=minioadmin
+  #     - S3_SECRET_KEY=minioadmin
+  #     - OLLAMA_URL=http://ollama:11434
+  #   depends_on:
+  #     nats:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+
+  # llm-worker:
+  #   build: ./services/llm-worker
+  #   environment:
+  #     - NATS_URL=nats://nats:4222
+  #     - LITELLM_URL=http://10.100.0.100:14000
+  #     - LLM_MODEL=qwen2.5:14b
+  #   depends_on:
+  #     nats:
+  #       condition: service_healthy
+
+  # tts-worker:
+  #   build: ./services/tts-worker
+  #   environment:
+  #     - NATS_URL=nats://nats:4222
+  #     - S3_ENDPOINT=http://minio:9000
+  #     - S3_ACCESS_KEY=minioadmin
+  #     - S3_SECRET_KEY=minioadmin
+  #     - TTS_PROVIDER=kokoro
+  #   volumes:
+  #     - ./models:/models
+  #   depends_on:
+  #     nats:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+  # frontend:
+  #   build: ./frontend
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+  #     - "traefik.http.routers.frontend.priority=1"
+  #     - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+  #   depends_on:
+  #     - api-service
+
+volumes:
+  postgres-auth-data:
+  postgres-api-data:
+  nats-data:
+  minio-data:

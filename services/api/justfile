@@ -1,0 +1,106 @@
+# Disona API Service
+# Run `just --list` to see all available commands
+
+set dotenv-load
+
+# Default: show help
+default:
+    @just --list
+
+# ============ STANDARD COMMANDS ============
+
+# Setup: run migrations and prepare environment
+setup:
+    cargo sqlx migrate run
+
+# Build the service (debug)
+build:
+    cargo build
+
+# Build the service (release)
+build-release:
+    cargo build --release
+
+# Run all checks (format, lint, audit)
+check: fmt-check lint audit deny
+
+# Run all tests with coverage
+test:
+    cargo nextest run
+
+# Run tests with coverage report
+test-cov:
+    cargo llvm-cov --all-features --lcov --output-path lcov.info
+    @echo "Coverage report: lcov.info"
+
+# Clean build artifacts
+clean:
+    cargo clean
+
+# ============ DEVELOPMENT ============
+
+# Run the service locally
+run:
+    cargo run
+
+# Watch for changes and rebuild
+watch:
+    cargo watch -x run
+
+# ============ CODE QUALITY ============
+
+# Format code
+fmt:
+    cargo fmt --all
+
+# Check formatting
+fmt-check:
+    cargo fmt --all -- --check
+
+# Run linter
+lint:
+    cargo clippy --all-targets --all-features -- -D warnings
+
+# Run linter and fix issues
+lint-fix:
+    cargo clippy --all-targets --all-features --fix --allow-dirty -- -D warnings
+
+# Security audit
+audit:
+    cargo audit
+
+# License and dependency check
+deny:
+    cargo deny check
+
+# Check for outdated dependencies
+outdated:
+    cargo outdated -R
+
+# Check for unused dependencies (requires nightly)
+udeps:
+    cargo +nightly udeps --all-targets
+
+# ============ DATABASE ============
+
+# Run database migrations
+db-migrate:
+    cargo sqlx migrate run
+
+# Create a new migration
+db-new-migration name:
+    cargo sqlx migrate add {{name}}
+
+# Check migration status
+db-status:
+    cargo sqlx migrate info
+
+# ============ DOCKER ============
+
+# Build Docker image
+docker-build:
+    docker build -t disona-api:latest .
+
+# Run in Docker
+docker-run:
+    docker run --rm -p 8080:8080 disona-api:latest
