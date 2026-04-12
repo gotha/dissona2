@@ -38,7 +38,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-12
-last_updated: 2026-04-12
+last_updated: 2026-04-12T14:30:00Z
 project: dissona2
 project_key: NOKEY
 tracking_system: file-system
@@ -48,8 +48,8 @@ development_status:
   # ============================================================================
   # EPIC 1: Authentication & Onboarding (P0 - Foundation)
   # ============================================================================
-  epic-1: backlog
-  1-1-google-oauth-sign-up: backlog
+  epic-1: in-progress
+  1-1-google-oauth-sign-up: ready-for-dev
   1-2-sign-in-and-sign-out: backlog
   1-3-cross-device-session: backlog
   1-4-sample-content-for-new-users: backlog
