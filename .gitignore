@@ -1,9 +1,10 @@
 # ============ ENVIRONMENT ============
-# Note: .env files are committed for dev configuration
-# Do NOT put production secrets in .env files
+# .env files contain secrets - do not commit
+.env
 .env.local
 .env.production
 .env.*.local
+services/*/.env
 
 # ============ DEPENDENCIES ============
 node_modules/
