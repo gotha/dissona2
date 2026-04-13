@@ -60,7 +60,7 @@ pub async fn refresh_token(
         })))
 }
 
-pub async fn logout(req: HttpRequest) -> impl Responder {
+pub async fn logout(_req: HttpRequest) -> impl Responder {
     // Clear refresh token cookie
     let mut removal_cookie = Cookie::build("refresh_token", "")
         .path("/auth")

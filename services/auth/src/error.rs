@@ -28,7 +28,6 @@ impl fmt::Display for AuthError {
             AuthError::JwtError(msg) => write!(f, "JWT error: {}", msg),
             AuthError::OAuthError(msg) => write!(f, "OAuth error: {}", msg),
             AuthError::DatabaseError(e) => write!(f, "Database error: {}", e),
-            AuthError::RedisError(e) => write!(f, "Redis error: {}", e),
             AuthError::Internal(msg) => write!(f, "Internal error: {}", msg),
         }
     }
