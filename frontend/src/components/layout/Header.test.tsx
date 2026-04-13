@@ -66,14 +66,17 @@ describe('Header', () => {
     // Initially dropdown is closed
     expect(screen.queryByText('Sign out')).not.toBeInTheDocument();
 
+    // Find the avatar button (has the user's image)
+    const avatarButton = screen.getByRole('img', { name: /test user/i }).closest('button')!;
+
     // Open dropdown
-    await user.click(screen.getByRole('button'));
+    await user.click(avatarButton);
     expect(screen.getByText('Sign out')).toBeInTheDocument();
     expect(screen.getByText(mockUser.name)).toBeInTheDocument();
     expect(screen.getByText(mockUser.email)).toBeInTheDocument();
 
-    // Close dropdown
-    await user.click(screen.getByRole('button'));
+    // Close dropdown by clicking avatar again
+    await user.click(avatarButton);
     await waitFor(() => {
       expect(screen.queryByText('Sign out')).not.toBeInTheDocument();
     });
@@ -83,7 +86,8 @@ describe('Header', () => {
     const user = userEvent.setup();
     renderHeader();
 
-    await user.click(screen.getByRole('button'));
+    const avatarButton = screen.getByRole('img', { name: /test user/i }).closest('button')!;
+    await user.click(avatarButton);
     expect(screen.getByRole('link', { name: /subscription/i })).toBeInTheDocument();
   });
 
@@ -93,7 +97,8 @@ describe('Header', () => {
 
     renderHeader();
 
-    await user.click(screen.getByRole('button'));
+    const avatarButton = screen.getByRole('img', { name: /test user/i }).closest('button')!;
+    await user.click(avatarButton);
     await user.click(screen.getByText('Sign out'));
 
     expect(logoutSpy).toHaveBeenCalled();
@@ -103,8 +108,10 @@ describe('Header', () => {
     const user = userEvent.setup();
     renderHeader();
 
+    const avatarButton = screen.getByRole('img', { name: /test user/i }).closest('button')!;
+
     // Open dropdown
-    await user.click(screen.getByRole('button'));
+    await user.click(avatarButton);
     expect(screen.getByText('Sign out')).toBeInTheDocument();
 
     // Click outside (on the logo)
@@ -127,12 +134,30 @@ describe('Header', () => {
   });
 
   it('should show loading state during logout', async () => {
-    useAuthStore.setState({ ...useAuthStore.getState(), isLoading: true });
     const user = userEvent.setup();
 
     renderHeader();
-    await user.click(screen.getByRole('button'));
+    const avatarButton = screen.getByRole('img', { name: /test user/i }).closest('button')!;
+
+    // Open dropdown first
+    await user.click(avatarButton);
+
+    // Set loading state while dropdown is open
+    useAuthStore.setState({ ...useAuthStore.getState(), isLoading: true });
+
+    // Re-render to pick up state change
+    renderHeader();
+    const avatarButton2 = screen.getAllByRole('img', { name: /test user/i })[0].closest('button')!;
+    await user.click(avatarButton2);
 
     expect(screen.getByText('Signing out...')).toBeInTheDocument();
+  });
+
+  it('should disable avatar button during logout', () => {
+    useAuthStore.setState({ ...useAuthStore.getState(), isLoading: true });
+    renderHeader();
+
+    const avatarButton = screen.getByRole('img', { name: /test user/i }).closest('button')!;
+    expect(avatarButton).toBeDisabled();
   });
 });
