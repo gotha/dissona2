@@ -7,7 +7,7 @@ services:
   postgres-auth:
     image: postgres:16
     ports:
-      - "5432:5432"
+      - "5435:5432"  # Changed from 5432 (in use by dissona-postgres)
     environment:
       POSTGRES_USER: disona_auth
       POSTGRES_PASSWORD: disona_auth
@@ -23,7 +23,7 @@ services:
   postgres-api:
     image: postgres:16
     ports:
-      - "5433:5432"
+      - "5434:5432"  # Changed from 5433 (in use by luna-postgres)
     environment:
       POSTGRES_USER: disona
       POSTGRES_PASSWORD: disona

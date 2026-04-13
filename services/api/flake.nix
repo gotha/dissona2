@@ -42,6 +42,7 @@
             cargo-llvm-cov
             cargo-nextest
             cargo-udeps
+            sqlx-cli
 
             # Build dependencies
             pkg-config
