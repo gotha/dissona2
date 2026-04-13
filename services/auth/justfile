@@ -41,11 +41,11 @@ clean:
 
 # Run the service locally
 run:
-    cargo run
+    cargo run --bin dissona-auth
 
 # Watch for changes and rebuild
 watch:
-    cargo watch -x run
+    cargo watch -x "run --bin dissona-auth"
 
 # ============ CODE QUALITY ============
 
@@ -99,7 +99,7 @@ db-status:
 
 # Generate a JWT token for a user
 generate-token user_id email name expires="365d":
-    cargo run --bin disona-auth-cli -- generate \
+    cargo run --bin dissona-auth-cli -- generate \
         --user-id {{user_id}} \
         --email {{email}} \
         --name "{{name}}" \
@@ -107,7 +107,7 @@ generate-token user_id email name expires="365d":
 
 # Generate a dev token (fixed user)
 dev-token:
-    cargo run --bin disona-auth-cli -- generate \
+    cargo run --bin dissona-auth-cli -- generate \
         --user-id "00000000-0000-0000-0000-000000000001" \
         --email "dev@local.test" \
         --name "Dev User" \
@@ -115,7 +115,7 @@ dev-token:
 
 # Verify a JWT token
 verify-token token:
-    cargo run --bin disona-auth-cli -- verify {{token}}
+    cargo run --bin dissona-auth-cli -- verify {{token}}
 
 # ============ DOCKER ============
 
