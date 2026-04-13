@@ -57,14 +57,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 15003,
     proxy: {
       '/api': {
-        target: 'http://localhost:80',
+        target: 'http://localhost:15002',
         changeOrigin: true,
       },
       '/auth': {
-        target: 'http://localhost:80',
+        target: 'http://localhost:15001',
         changeOrigin: true,
       },
     },

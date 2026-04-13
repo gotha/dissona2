@@ -1,5 +1,20 @@
 # Dissona Development Environment
 # Run: docker compose up -d
+#
+# Port Assignments (15000-15100 range):
+# - 15010: PostgreSQL Auth
+# - 15011: PostgreSQL API
+# - 15020: NATS client
+# - 15021: NATS HTTP monitoring
+# - 15030: MinIO S3 API
+# - 15031: MinIO Console
+# - 15080: Traefik HTTP
+# - 15088: Traefik Dashboard
+#
+# Application services (when running locally):
+# - 15001: Auth Service
+# - 15002: API Service
+# - 15003: Frontend (Vite)
 
 services:
   # ============ DATABASES ============
@@ -7,7 +22,7 @@ services:
   postgres-auth:
     image: postgres:16
     ports:
-      - "5435:5432"  # Changed from 5432 (in use by dissona-postgres)
+      - "15010:5432"
     environment:
       POSTGRES_USER: dissona_auth
       POSTGRES_PASSWORD: dissona_auth
@@ -23,7 +38,7 @@ services:
   postgres-api:
     image: postgres:16
     ports:
-      - "5434:5432"  # Changed from 5433 (in use by luna-postgres)
+      - "15011:5432"
     environment:
       POSTGRES_USER: dissona
       POSTGRES_PASSWORD: dissona
@@ -40,8 +55,8 @@ services:
     image: nats:latest
     command: ["--jetstream", "--store_dir=/data", "--http_port=8222"]
     ports:
-      - "4222:4222"
-      - "8222:8222"
+      - "15020:4222"
+      - "15021:8222"
     volumes:
       - nats-data:/data
     healthcheck:
@@ -54,8 +69,8 @@ services:
     image: minio/minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "15030:9000"
+      - "15031:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -79,8 +94,8 @@ services:
       - "--accesslog=true"
       - "--accesslog.format=json"
     ports:
-      - "80:80"
-      - "8080:8080"
+      - "15080:80"
+      - "15088:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
