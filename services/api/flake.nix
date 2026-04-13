@@ -78,11 +78,14 @@
             export RUST_BACKTRACE=1
             export CARGO_NET_GIT_FETCH_WITH_CLI=true
 
-            # OpenSSL
+            # OpenSSL (compile time)
             export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig"
             export OPENSSL_DIR="${pkgs.openssl.dev}"
             export OPENSSL_LIB_DIR="${pkgs.openssl.out}/lib"
             export OPENSSL_INCLUDE_DIR="${pkgs.openssl.dev}/include"
+
+            # Runtime library path for OpenSSL
+            export LD_LIBRARY_PATH="${pkgs.openssl.out}/lib:$LD_LIBRARY_PATH"
           '';
 
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
