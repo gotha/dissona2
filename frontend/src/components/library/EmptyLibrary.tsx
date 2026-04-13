@@ -107,7 +107,7 @@ export default function EmptyLibrary({ onUploadClick }: EmptyLibraryProps) {
 
       {/* Hint */}
       <p className="text-neutral-500 text-sm mt-6">
-        Try the sample to see how Disona works — no upload required!
+        Try the sample to see how Dissona works — no upload required!
       </p>
     </div>
   );

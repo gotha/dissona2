@@ -230,7 +230,7 @@ export default function GuidedUpload({ onSkip, onComplete }: GuidedUploadProps) 
             />
           </div>
           <p className="text-neutral-500 text-sm mt-4">
-            💡 Tip: Disona creates summaries so you can get the key points in minutes!
+            💡 Tip: Dissona creates summaries so you can get the key points in minutes!
           </p>
         </div>
       )}

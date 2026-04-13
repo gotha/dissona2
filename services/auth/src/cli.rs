@@ -1,9 +1,9 @@
 //! CLI tool for generating JWT tokens
 //!
 //! Usage:
-//!   disona-auth-cli generate --user-id <UUID> --email <EMAIL> --name <NAME>
-//!   disona-auth-cli generate -u <UUID> -e <EMAIL> -n <NAME> --expires-in 365d
-//!   disona-auth-cli verify <TOKEN>
+//!   dissona-auth-cli generate --user-id <UUID> --email <EMAIL> --name <NAME>
+//!   dissona-auth-cli generate -u <UUID> -e <EMAIL> -n <NAME> --expires-in 365d
+//!   dissona-auth-cli verify <TOKEN>
 
 use chrono::{Duration, Utc};
 use clap::{Parser, Subcommand};
@@ -13,8 +13,8 @@ use std::env;
 use uuid::Uuid;
 
 #[derive(Parser)]
-#[command(name = "disona-auth-cli")]
-#[command(about = "Disona Auth CLI - Generate and verify JWT tokens")]
+#[command(name = "dissona-auth-cli")]
+#[command(about = "Dissona Auth CLI - Generate and verify JWT tokens")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

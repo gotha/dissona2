@@ -112,7 +112,7 @@ describe('EmptyLibrary', () => {
   it('should show hint text', () => {
     renderEmptyLibrary();
 
-    expect(screen.getByText(/try the sample to see how disona works/i)).toBeInTheDocument();
+    expect(screen.getByText(/try the sample to see how dissona works/i)).toBeInTheDocument();
   });
 
   it('should disable Try Sample button while loading', async () => {

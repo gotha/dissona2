@@ -1,9 +1,9 @@
 [package]
-name = "disona-api"
+name = "dissona-api"
 version = "0.1.0"
 edition = "2021"
-authors = ["Disona Team"]
-description = "Disona API Service"
+authors = ["Dissona Team"]
+description = "Dissona API Service"
 
 [dependencies]
 # Web framework

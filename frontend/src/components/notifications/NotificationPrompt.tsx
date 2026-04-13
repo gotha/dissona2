@@ -86,7 +86,7 @@ export default function NotificationPrompt({ onClose }: NotificationPromptProps)
             D
           </div>
           <div>
-            <p className="text-white text-sm font-medium">Disona</p>
+            <p className="text-white text-sm font-medium">Dissona</p>
             <p className="text-neutral-400 text-xs">"Deep Work" is ready to listen!</p>
           </div>
         </div>

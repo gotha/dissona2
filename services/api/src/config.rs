@@ -58,11 +58,11 @@ fn default_max_connections() -> u32 {
 }
 
 fn default_bucket_uploads() -> String {
-    "disona-uploads".to_string()
+    "dissona-uploads".to_string()
 }
 
 fn default_bucket_audio() -> String {
-    "disona-audio".to_string()
+    "dissona-audio".to_string()
 }
 
 impl Settings {

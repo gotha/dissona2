@@ -5,7 +5,7 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900">
-          Welcome to Disona
+          Welcome to Dissona
         </h1>
         <p className="mt-4 text-xl text-gray-500">
           Turn your documents into intelligent audio

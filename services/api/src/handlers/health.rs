@@ -11,7 +11,7 @@ struct HealthResponse {
 pub async fn health_check() -> impl Responder {
     HttpResponse::Ok().json(HealthResponse {
         status: "healthy".to_string(),
-        service: "disona-api".to_string(),
+        service: "dissona-api".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
 }

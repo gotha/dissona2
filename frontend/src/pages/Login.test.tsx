@@ -39,7 +39,7 @@ describe('Login', () => {
   it('should render login page', () => {
     renderLogin();
 
-    expect(screen.getByText('Disona')).toBeInTheDocument();
+    expect(screen.getByText('Dissona')).toBeInTheDocument();
     expect(screen.getByText('Transform documents into audio')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
   });

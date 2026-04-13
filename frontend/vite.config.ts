@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
-        name: 'Disona',
-        short_name: 'Disona',
+        name: 'Dissona',
+        short_name: 'Dissona',
         description: 'Turn documents into intelligent audio',
         theme_color: '#4f46e5',
         background_color: '#ffffff',
@@ -33,7 +33,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/cdn\.disona\.app\/.*\.aac$/,
+            urlPattern: /^https:\/\/cdn\.dissona\.app\/.*\.aac$/,
             handler: 'CacheOnly',
             options: {
               cacheName: 'audio-cache',

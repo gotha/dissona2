@@ -1,5 +1,5 @@
 /**
- * Service Worker for Disona
+ * Service Worker for Dissona
  * 
  * Handles:
  * - Push notifications
@@ -7,7 +7,7 @@
  */
 
 // Cache name for offline support
-const CACHE_NAME = 'disona-v1';
+const CACHE_NAME = 'dissona-v1';
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -26,7 +26,7 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push received');
 
   let data = {
-    title: 'Disona',
+    title: 'Dissona',
     body: 'You have a new notification',
     icon: '/icons/icon-192.png',
     badge: '/icons/badge-72.png',

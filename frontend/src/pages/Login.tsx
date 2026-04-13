@@ -35,7 +35,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-neutral-950">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Disona</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Dissona</h1>
           <p className="text-neutral-400">Transform documents into audio</p>
         </div>
 

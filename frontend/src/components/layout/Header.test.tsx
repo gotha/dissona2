@@ -34,7 +34,7 @@ describe('Header', () => {
 
   it('should render logo', () => {
     renderHeader();
-    expect(screen.getByText('Disona')).toBeInTheDocument();
+    expect(screen.getByText('Dissona')).toBeInTheDocument();
   });
 
   it('should render navigation links', () => {
@@ -115,7 +115,7 @@ describe('Header', () => {
     expect(screen.getByText('Sign out')).toBeInTheDocument();
 
     // Click outside (on the logo)
-    await user.click(screen.getByText('Disona'));
+    await user.click(screen.getByText('Dissona'));
 
     await waitFor(() => {
       expect(screen.queryByText('Sign out')).not.toBeInTheDocument();

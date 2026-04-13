@@ -1,16 +1,16 @@
 [package]
-name = "disona-auth"
+name = "dissona-auth"
 version = "0.1.0"
 edition = "2021"
-authors = ["Disona Team"]
-description = "Disona Auth Service"
+authors = ["Dissona Team"]
+description = "Dissona Auth Service"
 
 [[bin]]
-name = "disona-auth"
+name = "dissona-auth"
 path = "src/main.rs"
 
 [[bin]]
-name = "disona-auth-cli"
+name = "dissona-auth-cli"
 path = "src/cli.rs"
 
 [dependencies]
