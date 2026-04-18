@@ -3,9 +3,10 @@
 //! Validates JWT tokens using the shared JWT_SECRET.
 //! Does not require any connection to the Auth Service.
 
-use actix_web::{dev::ServiceRequest, Error, HttpMessage, HttpRequest};
+use actix_web::{web, FromRequest, HttpRequest};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
+use std::future::{ready, Ready};
 use uuid::Uuid;
 
 use crate::error::ApiError;
@@ -96,4 +97,21 @@ pub fn get_authenticated_user(
     let token = extract_token(req)?;
     let claims = validator.validate(&token)?;
     AuthenticatedUser::try_from(claims)
+}
+
+/// Implement FromRequest for AuthenticatedUser to enable extraction in handlers
+impl FromRequest for AuthenticatedUser {
+    type Error = actix_web::Error;
+    type Future = Ready<Result<Self, Self::Error>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
+        let jwt = req
+            .app_data::<web::Data<JwtValidator>>()
+            .expect("JwtValidator not configured");
+
+        match get_authenticated_user(req, jwt.get_ref()) {
+            Ok(user) => ready(Ok(user)),
+            Err(e) => ready(Err(actix_web::error::ErrorUnauthorized(e.to_string()))),
+        }
+    }
 }

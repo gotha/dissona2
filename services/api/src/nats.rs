@@ -123,9 +123,10 @@ pub async fn init_streams(js: &Context) -> Result<(), async_nats::Error> {
 /// Publish a job to NATS
 pub async fn publish_job<T: Serialize>(
     js: &Context,
-    subject: &str,
+    subject: impl Into<String>,
     job: &T,
 ) -> Result<(), async_nats::Error> {
+    let subject = subject.into();
     let payload = serde_json::to_vec(job).expect("Failed to serialize job");
     js.publish(subject, payload.into()).await?.await?;
     Ok(())

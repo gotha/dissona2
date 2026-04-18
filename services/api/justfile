@@ -85,7 +85,17 @@ udeps:
 
 # Run database migrations
 db-migrate:
-    cargo sqlx migrate run
+    sqlx migrate run
+
+# Prepare SQLx offline mode (generates .sqlx directory for CI builds)
+db-prepare:
+    cargo sqlx prepare
+
+# Reset database (drop all tables and re-run migrations)
+db-reset:
+    sqlx database drop -y || true
+    sqlx database create
+    sqlx migrate run
 
 # Create a new migration
 db-new-migration name:

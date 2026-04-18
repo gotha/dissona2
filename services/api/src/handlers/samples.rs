@@ -62,8 +62,8 @@ pub async fn try_sample(
             project: SampleProject {
                 id: project.id,
                 title: project.title,
-                is_sample: project.is_sample.unwrap_or(false),
-                audiobook_status: project.audiobook_status,
+                is_sample: project.is_sample,
+                audiobook_status: project.audiobook_status.unwrap_or_default(),
                 chapters_count: project.chapters_count.unwrap_or(0),
             },
         }));
