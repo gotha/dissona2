@@ -19,13 +19,20 @@ impl JwtConfig {
         }
     }
 
-    pub fn create_access_token(&self, user_id: Uuid, email: &str, name: &str) -> Result<String, AuthError> {
+    pub fn create_access_token(
+        &self,
+        user_id: Uuid,
+        email: &str,
+        name: &str,
+        has_completed_first_upload: bool,
+    ) -> Result<String, AuthError> {
         let expiration = Utc::now() + Duration::hours(1);
-        
+
         let claims = AccessTokenClaims {
             sub: user_id.to_string(),
             email: email.to_string(),
             name: name.to_string(),
+            has_completed_first_upload,
             iat: Utc::now().timestamp() as usize,
             exp: expiration.timestamp() as usize,
             jti: Uuid::new_v4().to_string(),
@@ -68,6 +75,8 @@ pub struct AccessTokenClaims {
     pub sub: String,      // User ID
     pub email: String,
     pub name: String,
+    #[serde(default)]
+    pub has_completed_first_upload: bool,
     pub iat: usize,       // Issued at
     pub exp: usize,       // Expiration
     pub jti: String,      // Token ID

@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 
 import Header from './Header';
 import PlayerBar from '../player/PlayerBar';
+import NotificationPrompt from '../notifications/NotificationPrompt';
 import { usePlayerStore } from '../../stores/playerStore';
 
 export default function Layout() {
@@ -14,6 +15,7 @@ export default function Layout() {
         <Outlet />
       </main>
       {projectId && <PlayerBar />}
+      <NotificationPrompt />
     </div>
   );
 }

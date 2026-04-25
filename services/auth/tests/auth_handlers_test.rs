@@ -1,127 +1,161 @@
-//! Integration tests for authentication handlers
+//! Tests for authentication handlers and JWT functionality
 //!
-//! These tests verify the OAuth flow, token refresh, and logout functionality.
+//! Unit tests verify JWT creation, validation, and claims.
+//! Integration tests (marked with #[ignore]) require a running database.
 
-use actix_web::{test, web, App};
-use chrono::Utc;
+use dissona_auth::jwt::JwtConfig;
 use uuid::Uuid;
 
-// Note: These tests require mocking the database and OAuth client.
-// In a real implementation, you would use sqlx::test and mock the OAuth responses.
-
 #[cfg(test)]
-mod tests {
+mod jwt_tests {
     use super::*;
 
-    /// Test that the Google login endpoint redirects to Google OAuth
-    #[actix_web::test]
-    async fn test_google_login_redirects() {
-        // This test would verify that GET /auth/google returns a 302 redirect
-        // to Google's OAuth authorization endpoint with correct parameters:
-        // - client_id
-        // - redirect_uri
-        // - scope (email, profile)
-        // - response_type=code
-        // - state (CSRF token)
-        
-        // Implementation requires setting up test OAuth client
-        assert!(true, "Placeholder: Google login redirect test");
+    fn test_jwt_config() -> JwtConfig {
+        JwtConfig::new("test-secret-key-for-unit-tests-only")
     }
 
-    /// Test that the callback endpoint handles authorization code
-    #[actix_web::test]
-    async fn test_google_callback_creates_user() {
-        // This test would verify:
-        // 1. Exchange auth code for tokens
-        // 2. Fetch user info from Google
-        // 3. Create user in database
-        // 4. Return JWT tokens
-        // 5. Redirect to frontend with access token
-        
-        // Implementation requires mocking Google OAuth API
-        assert!(true, "Placeholder: Google callback creates user test");
+    #[test]
+    fn test_access_token_contains_correct_claims() {
+        let config = test_jwt_config();
+        let user_id = Uuid::new_v4();
+
+        let token = config
+            .create_access_token(user_id, "test@example.com", "Test User", false)
+            .expect("Failed to create access token");
+
+        let claims = config
+            .verify_access_token(&token)
+            .expect("Failed to verify access token");
+
+        assert_eq!(claims.sub, user_id.to_string());
+        assert_eq!(claims.email, "test@example.com");
+        assert_eq!(claims.name, "Test User");
+        assert!(!claims.has_completed_first_upload);
+        assert!(claims.exp > claims.iat);
     }
 
-    /// Test that callback updates existing user
-    #[actix_web::test]
-    async fn test_google_callback_updates_existing_user() {
-        // This test would verify:
-        // 1. User with google_id already exists
-        // 2. User name and avatar are updated
-        // 3. Email remains unchanged
-        
-        assert!(true, "Placeholder: Google callback updates existing user test");
+    #[test]
+    fn test_access_token_has_completed_first_upload_flag() {
+        let config = test_jwt_config();
+        let user_id = Uuid::new_v4();
+
+        let token = config
+            .create_access_token(user_id, "test@example.com", "Test User", true)
+            .expect("Failed to create access token");
+
+        let claims = config
+            .verify_access_token(&token)
+            .expect("Failed to verify access token");
+
+        assert!(claims.has_completed_first_upload);
     }
 
-    /// Test that callback handles OAuth errors
-    #[actix_web::test]
-    async fn test_google_callback_handles_error() {
-        // This test would verify:
-        // 1. Error parameter in callback
-        // 2. Redirect to login with error message
-        
-        assert!(true, "Placeholder: Google callback error handling test");
+    #[test]
+    fn test_access_token_expires_in_one_hour() {
+        let config = test_jwt_config();
+        let user_id = Uuid::new_v4();
+
+        let token = config
+            .create_access_token(user_id, "test@example.com", "Test", false)
+            .expect("Failed to create access token");
+
+        let claims = config
+            .verify_access_token(&token)
+            .expect("Failed to verify");
+
+        let duration = claims.exp - claims.iat;
+        // Should be approximately 3600 seconds (1 hour)
+        assert!(duration >= 3590 && duration <= 3610);
     }
 
-    /// Test token refresh endpoint
-    #[actix_web::test]
-    async fn test_refresh_token_returns_new_access_token() {
-        // This test would verify:
-        // 1. Valid refresh token in cookie
-        // 2. New access token returned
-        // 3. New refresh token set in cookie (rotation)
-        
-        assert!(true, "Placeholder: Refresh token test");
+    #[test]
+    fn test_refresh_token_contains_user_id() {
+        let config = test_jwt_config();
+        let user_id = Uuid::new_v4();
+        let session_id = Uuid::new_v4();
+
+        let token = config
+            .create_refresh_token(user_id, session_id)
+            .expect("Failed to create refresh token");
+
+        let claims = config
+            .verify_refresh_token(&token)
+            .expect("Failed to verify refresh token");
+
+        assert_eq!(claims.sub, user_id.to_string());
+        assert_eq!(claims.session_id, session_id.to_string());
     }
 
-    /// Test refresh with expired token
-    #[actix_web::test]
-    async fn test_refresh_expired_token_returns_401() {
-        // This test would verify:
-        // 1. Expired refresh token
-        // 2. 401 Unauthorized response
-        
-        assert!(true, "Placeholder: Refresh expired token test");
+    #[test]
+    fn test_refresh_token_expires_in_30_days() {
+        let config = test_jwt_config();
+        let user_id = Uuid::new_v4();
+        let session_id = Uuid::new_v4();
+
+        let token = config
+            .create_refresh_token(user_id, session_id)
+            .expect("Failed to create refresh token");
+
+        let claims = config
+            .verify_refresh_token(&token)
+            .expect("Failed to verify");
+
+        let duration_days = (claims.exp - claims.iat) / 86400;
+        assert_eq!(duration_days, 30);
     }
 
-    /// Test refresh with invalid token
-    #[actix_web::test]
-    async fn test_refresh_invalid_token_returns_401() {
-        // This test would verify:
-        // 1. Malformed or tampered refresh token
-        // 2. 401 Unauthorized response
-        
-        assert!(true, "Placeholder: Refresh invalid token test");
+    #[test]
+    fn test_access_token_invalid_with_wrong_secret() {
+        let config1 = test_jwt_config();
+        let config2 = JwtConfig::new("different-secret-key");
+        let user_id = Uuid::new_v4();
+
+        let token = config1
+            .create_access_token(user_id, "test@example.com", "Test", false)
+            .expect("Failed to create access token");
+
+        let result = config2.verify_access_token(&token);
+        assert!(result.is_err());
     }
 
-    /// Test logout endpoint
-    #[actix_web::test]
-    async fn test_logout_clears_refresh_cookie() {
-        // This test would verify:
-        // 1. POST /auth/logout
-        // 2. refresh_token cookie cleared (Max-Age=0)
-        // 3. 200 OK response
-        
-        assert!(true, "Placeholder: Logout clears cookie test");
+    #[test]
+    fn test_refresh_token_invalid_with_wrong_secret() {
+        let config1 = test_jwt_config();
+        let config2 = JwtConfig::new("different-secret-key");
+        let user_id = Uuid::new_v4();
+        let session_id = Uuid::new_v4();
+
+        let token = config1
+            .create_refresh_token(user_id, session_id)
+            .expect("Failed to create refresh token");
+
+        let result = config2.verify_refresh_token(&token);
+        assert!(result.is_err());
     }
 
-    /// Test JWT creation
-    #[actix_web::test]
-    async fn test_jwt_contains_user_claims() {
-        // This test would verify:
-        // 1. JWT payload contains sub, email, name, avatar_url
-        // 2. exp claim is set correctly (1 hour for access, 30 days for refresh)
-        
-        assert!(true, "Placeholder: JWT claims test");
+    #[test]
+    fn test_malformed_token_rejected() {
+        let config = test_jwt_config();
+
+        let result = config.verify_access_token("not-a-valid-jwt");
+        assert!(result.is_err());
     }
 
-    /// Test CSRF state validation
-    #[actix_web::test]
-    async fn test_callback_validates_csrf_state() {
-        // This test would verify:
-        // 1. State parameter is validated
-        // 2. Invalid state rejected with error
-        
-        assert!(true, "Placeholder: CSRF state validation test");
+    #[test]
+    fn test_each_token_has_unique_jti() {
+        let config = test_jwt_config();
+        let user_id = Uuid::new_v4();
+
+        let token1 = config
+            .create_access_token(user_id, "test@example.com", "Test", false)
+            .unwrap();
+        let token2 = config
+            .create_access_token(user_id, "test@example.com", "Test", false)
+            .unwrap();
+
+        let claims1 = config.verify_access_token(&token1).unwrap();
+        let claims2 = config.verify_access_token(&token2).unwrap();
+
+        assert_ne!(claims1.jti, claims2.jti);
     }
 }

@@ -5,6 +5,10 @@ edition = "2021"
 authors = ["Dissona Team"]
 description = "Dissona Auth Service"
 
+[lib]
+name = "dissona_auth"
+path = "src/lib.rs"
+
 [[bin]]
 name = "dissona-auth"
 path = "src/main.rs"

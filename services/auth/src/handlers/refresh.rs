@@ -26,7 +26,7 @@ pub async fn refresh_token(
 
     // Get user from database
     let user = sqlx::query!(
-        "SELECT id, email, name FROM users WHERE id = $1",
+        "SELECT id, email, name, has_completed_first_upload FROM users WHERE id = $1",
         user_id
     )
     .fetch_optional(db.get_ref())
@@ -38,6 +38,7 @@ pub async fn refresh_token(
         user.id,
         &user.email,
         user.name.as_deref().unwrap_or(""),
+        user.has_completed_first_upload,
     )?;
 
     // Create new refresh token (rotation)

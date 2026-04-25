@@ -1,23 +1,12 @@
-#![warn(clippy::all)]
-#![warn(clippy::pedantic)]
-#![warn(clippy::nursery)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::must_use_candidate)]
-#![allow(clippy::missing_errors_doc)]
-
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 use sqlx::postgres::PgPoolOptions;
 use tracing::info;
 use tracing_actix_web::TracingLogger;
 
-mod config;
-mod error;
-mod handlers;
-mod jwt;
-mod oauth;
-
-use config::Settings;
+use dissona_auth::config::Settings;
+use dissona_auth::handlers;
+use dissona_auth::jwt::JwtConfig;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -51,10 +40,10 @@ async fn main() -> anyhow::Result<()> {
     info!("Auth database migrations applied");
 
     // OAuth client
-    let oauth_client = oauth::create_google_client(&settings)?;
+    let oauth_client = dissona_auth::oauth::create_google_client(&settings)?;
 
     // JWT config
-    let jwt_config = jwt::JwtConfig::new(&settings.jwt.secret);
+    let jwt_config = JwtConfig::new(&settings.jwt.secret);
 
     // Start HTTP server
     let server_addr = format!("{}:{}", settings.server.host, settings.server.port);

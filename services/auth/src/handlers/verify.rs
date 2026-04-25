@@ -29,6 +29,7 @@ pub async fn verify_token(
         .json(serde_json::json!({
             "user_id": claims.sub,
             "email": claims.email,
-            "name": claims.name
+            "name": claims.name,
+            "hasCompletedFirstUpload": claims.has_completed_first_upload
         })))
 }
