@@ -156,24 +156,25 @@ class ChapterDetector:
     EMPTY_THRESHOLD = 10
 
     def _eliminate_empty_chapters(self, chapters: List[Chapter]) -> List[Chapter]:
-        """Drop empty chapters and prefix their title onto following children.
+        """Drop empty chapters and prefix their title onto children within their page range.
 
         When a chapter has effectively no content (< EMPTY_THRESHOLD words),
         it's likely a section heading whose real content lives in the chapters
         that follow. We drop the empty chapter and prepend its title to each
-        subsequent chapter until the next non-empty chapter, using ' — ' as
-        the separator.
+        subsequent chapter that falls within the empty parent's page range,
+        using ' — ' as the separator.
 
         Example:
-            "1.2 What problems..." (0 words)  → dropped
-            "1.2.1 Building the software right" (758 words)
-                → "What problems are you trying to solve — Building the software right"
+            "1.2 What problems..." (pages 10-15, 0 words)  → dropped
+            "1.2.1 Building the software right" (pages 10-12, 758 words)
+                → "1.2 What problems... — 1.2.1 Building the software right"
         """
         if not chapters:
             return chapters
 
         result: List[Chapter] = []
         pending_parent_title: Optional[str] = None
+        pending_parent_end_page: int = -1
 
         for ch in chapters:
             word_count = len(ch.text.split())
@@ -181,18 +182,24 @@ class ChapterDetector:
             if word_count < self.EMPTY_THRESHOLD:
                 # This chapter is empty — save its title for prefixing
                 pending_parent_title = ch.title
+                pending_parent_end_page = ch.end_page
                 logger.info("Dropping empty chapter, will prefix children",
-                            title=ch.title, words=word_count)
+                            title=ch.title, words=word_count,
+                            end_page=ch.end_page)
                 continue
 
-            if pending_parent_title:
-                # Prefix the parent title onto this child
+            if pending_parent_title and ch.start_page <= pending_parent_end_page:
+                # Child is within the parent's page range — prefix it
                 ch = Chapter(
                     title=f"{pending_parent_title} — {ch.title}",
                     text=ch.text,
                     start_page=ch.start_page,
                     end_page=ch.end_page,
                 )
+            else:
+                # Outside parent's range — clear the pending prefix
+                pending_parent_title = None
+                pending_parent_end_page = -1
 
             result.append(ch)
 

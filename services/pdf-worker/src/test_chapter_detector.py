@@ -259,10 +259,10 @@ class TestEliminateEmptyChapters:
         assert result[1].title == "Ch 2"
 
     def test_empty_chapter_prefixes_children(self, settings):
-        """Empty chapter's title is prefixed to following children."""
+        """Empty chapter's title is prefixed to following children within page range."""
         detector = ChapterDetector(settings)
         chapters = [
-            Chapter(title="1.2 What problems", text="", start_page=0, end_page=0),
+            Chapter(title="1.2 What problems", text="", start_page=0, end_page=4),
             Chapter(title="1.2.1 Building right", text="word " * 100, start_page=1, end_page=2),
             Chapter(title="1.2.2 Building software", text="word " * 100, start_page=3, end_page=4),
         ]
@@ -276,10 +276,10 @@ class TestEliminateEmptyChapters:
         detector = ChapterDetector(settings)
         chapters = [
             Chapter(title="Standalone", text="word " * 50, start_page=0, end_page=0),
-            Chapter(title="Section A", text="", start_page=1, end_page=1),
+            Chapter(title="Section A", text="", start_page=1, end_page=5),
             Chapter(title="A.1 First", text="word " * 100, start_page=2, end_page=3),
             Chapter(title="A.2 Second", text="word " * 100, start_page=4, end_page=5),
-            Chapter(title="Section B", text="", start_page=6, end_page=6),
+            Chapter(title="Section B", text="", start_page=6, end_page=8),
             Chapter(title="B.1 Third", text="word " * 100, start_page=7, end_page=8),
         ]
         result = detector._eliminate_empty_chapters(chapters)
@@ -299,6 +299,19 @@ class TestEliminateEmptyChapters:
         result = detector._eliminate_empty_chapters(chapters)
         assert len(result) == 1
         assert result[0].title == "Ch 1"
+
+    def test_child_outside_parent_range_not_prefixed(self, settings):
+        """Children beyond the parent's page range are NOT prefixed."""
+        detector = ChapterDetector(settings)
+        chapters = [
+            Chapter(title="Section A", text="", start_page=0, end_page=5),
+            Chapter(title="A.1 Child", text="word " * 100, start_page=1, end_page=3),
+            Chapter(title="Next Section", text="word " * 100, start_page=6, end_page=10),
+        ]
+        result = detector._eliminate_empty_chapters(chapters)
+        assert len(result) == 2
+        assert result[0].title == "Section A — A.1 Child"
+        assert result[1].title == "Next Section"  # NOT prefixed
 
     def test_all_empty_returns_original(self, settings):
         """If ALL chapters are empty, return original list."""
@@ -321,7 +334,7 @@ class TestEliminateEmptyChapters:
         """Chapters with fewer than EMPTY_THRESHOLD words are treated as empty."""
         detector = ChapterDetector(settings)
         chapters = [
-            Chapter(title="Parent", text="just five words here ok", start_page=0, end_page=0),
+            Chapter(title="Parent", text="just five words here ok", start_page=0, end_page=5),
             Chapter(title="Child", text="word " * 100, start_page=1, end_page=2),
         ]
         result = detector._eliminate_empty_chapters(chapters)
@@ -333,7 +346,7 @@ class TestEliminateEmptyChapters:
         detector = ChapterDetector(settings)
         child_text = "word " * 100
         chapters = [
-            Chapter(title="Parent", text="", start_page=0, end_page=0),
+            Chapter(title="Parent", text="", start_page=0, end_page=10),
             Chapter(title="Child", text=child_text, start_page=5, end_page=10),
         ]
         result = detector._eliminate_empty_chapters(chapters)
