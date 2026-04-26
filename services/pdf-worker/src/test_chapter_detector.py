@@ -290,6 +290,19 @@ class TestEliminateEmptyChapters:
         assert result[0].title == "1.2 What problems — 1.2.1 Building right"
         assert result[1].title == "1.2 What problems — 1.2.2 Building software"
 
+    def test_parent_with_content_still_prefixes_children(self, settings):
+        """A parent chapter with content is still detected as parent if it has numbered children."""
+        detector = ChapterDetector(settings)
+        chapters = [
+            Chapter(title="1.2 What problems", text="word " * 500, start_page=0, end_page=4),
+            Chapter(title="1.2.1 Building right", text="word " * 100, start_page=1, end_page=2),
+            Chapter(title="1.2.2 Building software", text="word " * 100, start_page=3, end_page=4),
+        ]
+        result = detector._eliminate_empty_chapters(chapters)
+        assert len(result) == 2
+        assert result[0].title == "1.2 What problems — 1.2.1 Building right"
+        assert result[1].title == "1.2 What problems — 1.2.2 Building software"
+
     def test_multiple_empty_parents_numbered(self, settings):
         """Each numbered empty parent prefixes only its own children."""
         detector = ChapterDetector(settings)
@@ -323,8 +336,8 @@ class TestEliminateEmptyChapters:
         assert result[0].title == "1.4 Benefits — 1.4.1 Child"
         assert result[1].title == "1.5 Next Section"
 
-    def test_different_top_level_not_prefixed(self, settings):
-        """A chapter from a different top-level section is NOT prefixed."""
+    def test_different_top_level_not_cross_prefixed(self, settings):
+        """A chapter from a different top-level section uses its own parent prefix."""
         detector = ChapterDetector(settings)
         chapters = [
             Chapter(title="1.5 Last section", text="", start_page=0, end_page=3),
@@ -333,10 +346,21 @@ class TestEliminateEmptyChapters:
             Chapter(title="2.1 First sub", text="word " * 100, start_page=4, end_page=6),
         ]
         result = detector._eliminate_empty_chapters(chapters)
-        assert len(result) == 3
+        assert len(result) == 2
         assert result[0].title == "1.5 Last section — 1.5.1 Sub"
-        assert result[1].title == "2 New Chapter"
-        assert result[2].title == "2.1 First sub"
+        assert result[1].title == "2 New Chapter — 2.1 First sub"
+
+    def test_leaf_chapter_not_dropped(self, settings):
+        """A chapter with content and no children stays as-is."""
+        detector = ChapterDetector(settings)
+        chapters = [
+            Chapter(title="1.6 Summary", text="word " * 100, start_page=7, end_page=8),
+            Chapter(title="2 Next", text="word " * 100, start_page=9, end_page=12),
+        ]
+        result = detector._eliminate_empty_chapters(chapters)
+        assert len(result) == 2
+        assert result[0].title == "1.6 Summary"
+        assert result[1].title == "2 Next"
 
     def test_empty_chapter_at_end_is_dropped(self, settings):
         """Trailing empty chapter with no children is just dropped."""
@@ -349,16 +373,15 @@ class TestEliminateEmptyChapters:
         assert len(result) == 1
         assert result[0].title == "1 Ch"
 
-    def test_all_empty_returns_original(self, settings):
-        """If ALL chapters are empty, return original list."""
+    def test_all_empty_are_dropped(self, settings):
+        """If ALL chapters are empty with no children, they are all dropped."""
         detector = ChapterDetector(settings)
         chapters = [
             Chapter(title="1 Empty", text="", start_page=0, end_page=0),
             Chapter(title="2 Empty", text="", start_page=1, end_page=1),
         ]
         result = detector._eliminate_empty_chapters(chapters)
-        assert len(result) == 2
-        assert result[0].title == "1 Empty"
+        assert len(result) == 0
 
     def test_empty_list(self, settings):
         """Empty input returns empty."""

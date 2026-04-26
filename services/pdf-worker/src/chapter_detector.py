@@ -162,33 +162,70 @@ class ChapterDetector:
         return m.group(1) if m else None
 
     def _eliminate_empty_chapters(self, chapters: List[Chapter]) -> List[Chapter]:
-        """Drop empty chapters and prefix their title onto child chapters.
+        """Drop parent chapters and prefix their title onto child chapters.
 
-        A child is identified by its numbering prefix: if parent is "1.4 Benefits"
-        then "1.4.1 Reduced waste" is a child (starts with "1.4.").
-        For unnumbered chapters, children are all following until the next empty chapter.
+        A parent is identified in two ways:
+        1. It has < EMPTY_THRESHOLD words (truly empty heading)
+        2. It has numbered children following it (e.g. "1.2" followed by "1.2.1")
+
+        Children are identified by numbering: "1.4.1" is a child of "1.4".
+        For unnumbered empty chapters, children are all following until the next
+        empty chapter.
 
         Example:
-            "1.4 Benefits of BDD" (0 words)  → dropped
-            "1.4.1 Reduced waste" (443 words)
-                → "1.4 Benefits of BDD — 1.4.1 Reduced waste"
+            "1.2 What problems..." (parent, has children 1.2.1, 1.2.2)  → dropped
+            "1.2.1 Building the software right" (child)
+                → "1.2 What problems... — 1.2.1 Building the software right"
         """
         if not chapters:
             return chapters
 
+        # Pass 1: identify which chapters are parents by checking if they
+        # have numbered children in the list, OR are truly empty (< threshold)
+        parent_indices = set()
+        empty_indices = set()
+        for i, ch in enumerate(chapters):
+            word_count = len(ch.text.split())
+            num = self._extract_numbering(ch.title)
+
+            has_children = False
+            if num:
+                # Check if any following chapter is a numbered child
+                for j in range(i + 1, len(chapters)):
+                    child_num = self._extract_numbering(chapters[j].title)
+                    if child_num and child_num.startswith(num + "."):
+                        has_children = True
+                        break
+                    if child_num and not child_num.startswith(num + "."):
+                        break
+
+            if has_children:
+                parent_indices.add(i)
+            elif word_count < self.EMPTY_THRESHOLD:
+                # Truly empty with no children — mark for dropping
+                if num is None:
+                    # Unnumbered empty: treat as parent (prefix following)
+                    parent_indices.add(i)
+                else:
+                    # Numbered empty with no children: just drop
+                    empty_indices.add(i)
+
+        # Pass 2: build result with prefixing
         result: List[Chapter] = []
         pending_parent_title: Optional[str] = None
         pending_parent_prefix: Optional[str] = None
 
-        for ch in chapters:
-            word_count = len(ch.text.split())
+        for i, ch in enumerate(chapters):
+            if i in empty_indices:
+                logger.info("Dropping empty chapter (no children)",
+                            title=ch.title)
+                continue
 
-            if word_count < self.EMPTY_THRESHOLD:
-                # This chapter is empty — save its title for prefixing
+            if i in parent_indices:
                 pending_parent_title = ch.title
                 pending_parent_prefix = self._extract_numbering(ch.title)
-                logger.info("Dropping empty chapter, will prefix children",
-                            title=ch.title, words=word_count)
+                logger.info("Dropping parent chapter, will prefix children",
+                            title=ch.title, words=len(ch.text.split()))
                 continue
 
             if pending_parent_title:
@@ -196,11 +233,9 @@ class ChapterDetector:
                 is_child = False
 
                 if pending_parent_prefix and child_num:
-                    # Numbered: child if it starts with parent's number + "."
                     is_child = child_num.startswith(pending_parent_prefix + ".")
                 elif pending_parent_prefix is None:
-                    # Unnumbered parent: assume following chapters are children
-                    # until the next empty chapter resets it
+                    # Unnumbered parent: all following are children
                     is_child = True
 
                 if is_child:
@@ -211,13 +246,11 @@ class ChapterDetector:
                         end_page=ch.end_page,
                     )
                 else:
-                    # Not a child — clear the pending prefix
                     pending_parent_title = None
                     pending_parent_prefix = None
 
             result.append(ch)
 
-        # If the last chapter(s) were empty, they're just dropped
         if pending_parent_title and not result:
             return chapters
 
