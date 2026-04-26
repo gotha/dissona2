@@ -50,11 +50,11 @@ def sample_pdf_with_toc():
     """Create a PDF with a TOC."""
     doc = fitz.open()
     page1 = doc.new_page()
-    page1.insert_text((72, 72), "Foreword\n\nSome introductory text here.")
+    page1.insert_text((72, 72), "Foreword\n\nSome introductory text here with enough words to pass the empty threshold easily.")
     page2 = doc.new_page()
-    page2.insert_text((72, 72), "Main Content\n\nThe body of the document.")
+    page2.insert_text((72, 72), "Main Content\n\nThe body of the document with plenty of additional words for testing purposes.")
     page3 = doc.new_page()
-    page3.insert_text((72, 72), "Appendix\n\nAdditional materials.")
+    page3.insert_text((72, 72), "Appendix\n\nAdditional materials and references that provide enough content for the chapter.")
     doc.set_toc([
         [1, "Foreword", 1],
         [1, "Main Content", 2],

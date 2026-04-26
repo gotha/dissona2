@@ -47,6 +47,8 @@ class ChapterDetector:
             self.last_method = "toc"
             # Check for oversized chapters and refine
             chapters = self._refine_large_chapters(doc, chapters)
+            # Eliminate empty chapters by prefixing children
+            chapters = self._eliminate_empty_chapters(chapters)
             return chapters
 
         # Strategy 2: Try heading patterns
@@ -54,6 +56,7 @@ class ChapterDetector:
         if chapters and len(chapters) > 1:
             self.last_method = "headings"
             chapters = self._refine_large_chapters(doc, chapters)
+            chapters = self._eliminate_empty_chapters(chapters)
             return chapters
 
         # Strategy 3: Try text patterns
@@ -61,6 +64,7 @@ class ChapterDetector:
         if chapters and len(chapters) > 1:
             self.last_method = "patterns"
             chapters = self._split_oversized_chapters(chapters)
+            chapters = self._eliminate_empty_chapters(chapters)
             return chapters
 
         # Strategy 4: Fall back to single chapter (may be split)
@@ -146,6 +150,57 @@ class ChapterDetector:
                 result.extend(self._split_by_words(ch))
             else:
                 result.append(ch)
+        return result
+
+    # Minimum word count to consider a chapter non-empty
+    EMPTY_THRESHOLD = 10
+
+    def _eliminate_empty_chapters(self, chapters: List[Chapter]) -> List[Chapter]:
+        """Drop empty chapters and prefix their title onto following children.
+
+        When a chapter has effectively no content (< EMPTY_THRESHOLD words),
+        it's likely a section heading whose real content lives in the chapters
+        that follow. We drop the empty chapter and prepend its title to each
+        subsequent chapter until the next non-empty chapter, using ' — ' as
+        the separator.
+
+        Example:
+            "1.2 What problems..." (0 words)  → dropped
+            "1.2.1 Building the software right" (758 words)
+                → "What problems are you trying to solve — Building the software right"
+        """
+        if not chapters:
+            return chapters
+
+        result: List[Chapter] = []
+        pending_parent_title: Optional[str] = None
+
+        for ch in chapters:
+            word_count = len(ch.text.split())
+
+            if word_count < self.EMPTY_THRESHOLD:
+                # This chapter is empty — save its title for prefixing
+                pending_parent_title = ch.title
+                logger.info("Dropping empty chapter, will prefix children",
+                            title=ch.title, words=word_count)
+                continue
+
+            if pending_parent_title:
+                # Prefix the parent title onto this child
+                ch = Chapter(
+                    title=f"{pending_parent_title} — {ch.title}",
+                    text=ch.text,
+                    start_page=ch.start_page,
+                    end_page=ch.end_page,
+                )
+
+            result.append(ch)
+
+        # If the last chapter(s) were empty, they're just dropped
+        if pending_parent_title and not result:
+            # Edge case: ALL chapters were empty — shouldn't happen, but return as-is
+            return chapters
+
         return result
 
     def _split_by_words(self, chapter: Chapter) -> List[Chapter]:
