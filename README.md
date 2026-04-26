@@ -6,8 +6,35 @@ This project is set up with the [BMAD Method](https://docs.bmad-method.org/) (Bu
 
 ### Prerequisites
 
-- Node.js 20+
+- [Nix](https://nixos.org/) with flakes enabled
+- Docker & Docker Compose
 - An AI-powered IDE: Cursor, Claude Code, or Augment Code CLI (auggie)
+
+### Running the Project
+
+1. **Start infrastructure** (PostgreSQL, NATS, MinIO):
+
+```bash
+docker compose up -d
+```
+
+2. **Start all services** (auth, api, pdf-worker, frontend):
+
+```bash
+just run
+```
+
+This launches [process-compose](https://f1bonacc1.github.io/process-compose/) with a TUI showing all services.
+
+| Service | Port |
+|---------|------|
+| Frontend | http://localhost:15003 |
+| API | http://localhost:15002 |
+| Auth | http://localhost:15001 |
+| PostgreSQL (auth) | 15010 |
+| PostgreSQL (api) | 15011 |
+| NATS | 15020 |
+| MinIO | 15030 |
 
 ### Using BMAD
 
