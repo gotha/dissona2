@@ -26,19 +26,8 @@
             echo "Run 'just --list' for available commands"
             echo ""
 
-            # Load root .env first (shared secrets)
-            if [ -f ../.env ]; then
-              set -a
-              source ../.env
-              set +a
-            fi
-
-            # Load service-specific .env (overrides root)
-            if [ -f .env ]; then
-              set -a
-              source .env
-              set +a
-            fi
+            # Vite reads .env files directly — don't export them
+            # to the shell environment (would conflict with Vite's own loading)
 
             # Install dependencies if needed
             if [ ! -d "node_modules" ]; then

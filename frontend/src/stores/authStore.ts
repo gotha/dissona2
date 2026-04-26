@@ -28,7 +28,7 @@ interface AuthState {
   shouldShowNotificationPrompt: () => boolean;
 }
 
-const AUTH_API_BASE = import.meta.env.VITE_AUTH_URL || 'http://localhost:8081';
+const AUTH_API_BASE = import.meta.env.VITE_AUTH_URL || '';
 
 export const useAuthStore = create<AuthState>()(
   persist(
