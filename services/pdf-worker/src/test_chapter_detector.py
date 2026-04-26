@@ -413,6 +413,77 @@ class TestEliminateEmptyChapters:
         assert result[0].start_page == 5
         assert result[0].end_page == 10
 
+    def test_bdd_book_scenario(self, settings):
+        """Real-world scenario: BDD in Action book TOC structure.
+
+        Parent chapters like 1.2, 1.3, 1.4, 1.5 have content from page
+        extraction (children's text bleeds in) but should still be detected
+        as parents because they have numbered children following them.
+        Leaf chapters like 1.1, 1.6, 2 stay standalone.
+        """
+        detector = ChapterDetector(settings)
+        chapters = [
+            Chapter(title="1.1 BDD from 50,000 feet",
+                    text="word " * 200, start_page=1, end_page=3),
+            Chapter(title="1.2 What problems are you trying to solve?",
+                    text="word " * 500, start_page=4, end_page=10),
+            Chapter(title="1.2.1 Building the software right",
+                    text="word " * 300, start_page=4, end_page=6),
+            Chapter(title="1.2.2 Building the right software",
+                    text="word " * 200, start_page=7, end_page=8),
+            Chapter(title="1.2.3 The knowledge constraint",
+                    text="word " * 400, start_page=9, end_page=10),
+            Chapter(title="1.3 Introducing BDD",
+                    text="word " * 600, start_page=11, end_page=18),
+            Chapter(title="1.3.1 BDD was originally designed as improved TDD",
+                    text="word " * 300, start_page=11, end_page=13),
+            Chapter(title="1.3.2 BDD also works well for requirements",
+                    text="word " * 150, start_page=14, end_page=15),
+            Chapter(title="1.3.3 BDD principles and practices",
+                    text="word " * 1500, start_page=16, end_page=18),
+            Chapter(title="1.4 Benefits of BDD",
+                    text="word " * 200, start_page=19, end_page=21),
+            Chapter(title="1.4.1 Reduced waste",
+                    text="word " * 150, start_page=19, end_page=20),
+            Chapter(title="1.5 Disadvantages and potential challenges",
+                    text="word " * 300, start_page=22, end_page=26),
+            Chapter(title="1.5.1 BDD requires high engagement",
+                    text="word " * 150, start_page=22, end_page=23),
+            Chapter(title="1.6 Summary",
+                    text="word " * 200, start_page=27, end_page=28),
+        ]
+        result = detector._eliminate_empty_chapters(chapters)
+
+        titles = [ch.title for ch in result]
+
+        # "1.1" is a leaf — standalone
+        assert "1.1 BDD from 50,000 feet" in titles
+
+        # Parent "1.2" prefixes its children
+        assert "1.2 What problems are you trying to solve? — 1.2.1 Building the software right" in titles
+        assert "1.2 What problems are you trying to solve? — 1.2.2 Building the right software" in titles
+        assert "1.2 What problems are you trying to solve? — 1.2.3 The knowledge constraint" in titles
+
+        # Parent "1.3" prefixes its children
+        assert "1.3 Introducing BDD — 1.3.1 BDD was originally designed as improved TDD" in titles
+        assert "1.3 Introducing BDD — 1.3.2 BDD also works well for requirements" in titles
+        assert "1.3 Introducing BDD — 1.3.3 BDD principles and practices" in titles
+
+        # Parent "1.4" prefixes its child
+        assert "1.4 Benefits of BDD — 1.4.1 Reduced waste" in titles
+
+        # Parent "1.5" prefixes its child
+        assert "1.5 Disadvantages and potential challenges — 1.5.1 BDD requires high engagement" in titles
+
+        # "1.6 Summary" is a leaf — standalone, no prefix
+        assert "1.6 Summary" in titles
+
+        # No raw parent titles in output
+        assert "1.2 What problems are you trying to solve?" not in titles
+        assert "1.3 Introducing BDD" not in titles
+        assert "1.4 Benefits of BDD" not in titles
+        assert "1.5 Disadvantages and potential challenges" not in titles
+
     def test_unnumbered_empty_prefixes_until_next_empty(self, settings):
         """Unnumbered empty chapter prefixes all following until next empty."""
         detector = ChapterDetector(settings)
