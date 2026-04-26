@@ -155,26 +155,30 @@ class ChapterDetector:
     # Minimum word count to consider a chapter non-empty
     EMPTY_THRESHOLD = 10
 
-    def _eliminate_empty_chapters(self, chapters: List[Chapter]) -> List[Chapter]:
-        """Drop empty chapters and prefix their title onto children within their page range.
+    @staticmethod
+    def _extract_numbering(title: str) -> Optional[str]:
+        """Extract the numbering prefix from a chapter title (e.g. '1.4' from '1.4 Benefits')."""
+        m = re.match(r"^(\d+(?:\.\d+)*)", title.strip())
+        return m.group(1) if m else None
 
-        When a chapter has effectively no content (< EMPTY_THRESHOLD words),
-        it's likely a section heading whose real content lives in the chapters
-        that follow. We drop the empty chapter and prepend its title to each
-        subsequent chapter that falls within the empty parent's page range,
-        using ' — ' as the separator.
+    def _eliminate_empty_chapters(self, chapters: List[Chapter]) -> List[Chapter]:
+        """Drop empty chapters and prefix their title onto child chapters.
+
+        A child is identified by its numbering prefix: if parent is "1.4 Benefits"
+        then "1.4.1 Reduced waste" is a child (starts with "1.4.").
+        For unnumbered chapters, children are all following until the next empty chapter.
 
         Example:
-            "1.2 What problems..." (pages 10-15, 0 words)  → dropped
-            "1.2.1 Building the software right" (pages 10-12, 758 words)
-                → "1.2 What problems... — 1.2.1 Building the software right"
+            "1.4 Benefits of BDD" (0 words)  → dropped
+            "1.4.1 Reduced waste" (443 words)
+                → "1.4 Benefits of BDD — 1.4.1 Reduced waste"
         """
         if not chapters:
             return chapters
 
         result: List[Chapter] = []
         pending_parent_title: Optional[str] = None
-        pending_parent_end_page: int = -1
+        pending_parent_prefix: Optional[str] = None
 
         for ch in chapters:
             word_count = len(ch.text.split())
@@ -182,30 +186,39 @@ class ChapterDetector:
             if word_count < self.EMPTY_THRESHOLD:
                 # This chapter is empty — save its title for prefixing
                 pending_parent_title = ch.title
-                pending_parent_end_page = ch.end_page
+                pending_parent_prefix = self._extract_numbering(ch.title)
                 logger.info("Dropping empty chapter, will prefix children",
-                            title=ch.title, words=word_count,
-                            end_page=ch.end_page)
+                            title=ch.title, words=word_count)
                 continue
 
-            if pending_parent_title and ch.start_page <= pending_parent_end_page:
-                # Child is within the parent's page range — prefix it
-                ch = Chapter(
-                    title=f"{pending_parent_title} — {ch.title}",
-                    text=ch.text,
-                    start_page=ch.start_page,
-                    end_page=ch.end_page,
-                )
-            else:
-                # Outside parent's range — clear the pending prefix
-                pending_parent_title = None
-                pending_parent_end_page = -1
+            if pending_parent_title:
+                child_num = self._extract_numbering(ch.title)
+                is_child = False
+
+                if pending_parent_prefix and child_num:
+                    # Numbered: child if it starts with parent's number + "."
+                    is_child = child_num.startswith(pending_parent_prefix + ".")
+                elif pending_parent_prefix is None:
+                    # Unnumbered parent: assume following chapters are children
+                    # until the next empty chapter resets it
+                    is_child = True
+
+                if is_child:
+                    ch = Chapter(
+                        title=f"{pending_parent_title} — {ch.title}",
+                        text=ch.text,
+                        start_page=ch.start_page,
+                        end_page=ch.end_page,
+                    )
+                else:
+                    # Not a child — clear the pending prefix
+                    pending_parent_title = None
+                    pending_parent_prefix = None
 
             result.append(ch)
 
         # If the last chapter(s) were empty, they're just dropped
         if pending_parent_title and not result:
-            # Edge case: ALL chapters were empty — shouldn't happen, but return as-is
             return chapters
 
         return result
