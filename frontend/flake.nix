@@ -14,9 +14,8 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            # Node.js
+            # Node.js (npm is bundled)
             nodejs_20
-            nodePackages.npm
 
             # Task runner
             just

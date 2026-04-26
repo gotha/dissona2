@@ -66,6 +66,12 @@ export default defineConfig({
       '/auth': {
         target: 'http://localhost:15001',
         changeOrigin: true,
+        // Don't proxy /auth/callback — that's a frontend route
+        bypass(req) {
+          if (req.url?.startsWith('/auth/callback')) {
+            return req.url;
+          }
+        },
       },
     },
   },
