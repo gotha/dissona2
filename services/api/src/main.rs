@@ -1,27 +1,13 @@
-#![warn(clippy::all)]
-#![warn(clippy::pedantic)]
-#![warn(clippy::nursery)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::must_use_candidate)]
-#![allow(clippy::missing_errors_doc)]
-
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 use sqlx::postgres::PgPoolOptions;
 use tracing::info;
 use tracing_actix_web::TracingLogger;
 
-mod auth;
-mod config;
-mod db;
-mod error;
-mod handlers;
-mod models;
-mod nats;
-mod telemetry;
-
-use auth::JwtValidator;
-use config::Settings;
+use dissona_api::auth::JwtValidator;
+use dissona_api::config::Settings;
+use dissona_api::handlers;
+use dissona_api::telemetry;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {

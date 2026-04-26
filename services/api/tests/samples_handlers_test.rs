@@ -1,59 +1,107 @@
 //! Integration tests for sample content handlers
-//!
-//! These tests verify the sample project creation for new users.
 
-#[cfg(test)]
-mod tests {
-    /// Test creating sample project for new user
-    #[actix_web::test]
-    async fn test_try_sample_creates_project() {
-        // This test would verify:
-        // 1. POST /api/samples/try
-        // 2. Project created with is_sample=true
-        // 3. 5 chapters created
-        // 4. audiobook_status="ready"
-        
-        assert!(true, "Placeholder: Try sample creates project test");
-    }
+mod helpers;
 
-    /// Test sample returns existing if already created
-    #[actix_web::test]
-    async fn test_try_sample_returns_existing() {
-        // This test would verify:
-        // 1. User already has sample project
-        // 2. Returns existing project (not duplicate)
-        
-        assert!(true, "Placeholder: Try sample returns existing test");
-    }
+use actix_web::{http::StatusCode, test};
+use uuid::Uuid;
 
-    /// Test sample project has correct structure
-    #[actix_web::test]
-    async fn test_sample_has_chapters() {
-        // This test would verify:
-        // 1. Sample has 5 chapters
-        // 2. Each chapter has title and summary
-        // 3. Chapters are in correct order
-        
-        assert!(true, "Placeholder: Sample has chapters test");
-    }
+use helpers::{cleanup_test_user, configure_test_app, create_test_token, get_test_db_pool};
 
-    /// Test sample requires authentication
-    #[actix_web::test]
-    async fn test_try_sample_requires_auth() {
-        // This test would verify:
-        // 1. No auth token
-        // 2. 401 Unauthorized response
-        
-        assert!(true, "Placeholder: Try sample auth test");
-    }
+#[actix_web::test]
+async fn test_try_sample_requires_auth() {
+    let pool = get_test_db_pool().await;
+    let app = test::init_service(configure_test_app(pool.clone())).await;
 
-    /// Test sample doesn't count against quota
-    #[actix_web::test]
-    async fn test_sample_not_counted_in_quota() {
-        // This test would verify:
-        // 1. User has sample project
-        // 2. Quota calculation excludes sample
-        
-        assert!(true, "Placeholder: Sample quota exclusion test");
-    }
+    let req = test::TestRequest::post()
+        .uri("/api/samples/try")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[actix_web::test]
+async fn test_try_sample_creates_project() {
+    let pool = get_test_db_pool().await;
+    let user_id = Uuid::new_v4();
+    let token = create_test_token(user_id);
+    let app = test::init_service(configure_test_app(pool.clone())).await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/samples/try")
+        .insert_header(("Authorization", format!("Bearer {}", token)))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["project"]["is_sample"], true);
+    assert_eq!(body["project"]["chapters_count"], 5);
+    assert_eq!(body["project"]["audiobook_status"], "ready");
+
+    cleanup_test_user(&pool, user_id).await;
+}
+
+#[actix_web::test]
+async fn test_try_sample_returns_existing() {
+    let pool = get_test_db_pool().await;
+    let user_id = Uuid::new_v4();
+    let token = create_test_token(user_id);
+    let app = test::init_service(configure_test_app(pool.clone())).await;
+
+    // First call creates
+    let req = test::TestRequest::post()
+        .uri("/api/samples/try")
+        .insert_header(("Authorization", format!("Bearer {}", token)))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let body1: serde_json::Value = test::read_body_json(resp).await;
+
+    // Second call returns existing
+    let req = test::TestRequest::post()
+        .uri("/api/samples/try")
+        .insert_header(("Authorization", format!("Bearer {}", token)))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body2: serde_json::Value = test::read_body_json(resp).await;
+
+    // Same project ID returned
+    assert_eq!(body1["project"]["id"], body2["project"]["id"]);
+
+    cleanup_test_user(&pool, user_id).await;
+}
+
+#[actix_web::test]
+async fn test_sample_has_chapters() {
+    let pool = get_test_db_pool().await;
+    let user_id = Uuid::new_v4();
+    let token = create_test_token(user_id);
+    let app = test::init_service(configure_test_app(pool.clone())).await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/samples/try")
+        .insert_header(("Authorization", format!("Bearer {}", token)))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["project"]["chapters_count"], 5);
+
+    // Verify chapters exist in DB
+    let project_id: Uuid = body["project"]["id"].as_str().unwrap().parse().unwrap();
+    let count = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM chapters WHERE project_id = $1",
+        project_id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+
+    assert_eq!(count.unwrap_or(0), 5);
+
+    cleanup_test_user(&pool, user_id).await;
 }
