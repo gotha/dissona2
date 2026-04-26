@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from typing import List, Optional
 
@@ -49,6 +50,11 @@ class PdfProcessor:
     @JOB_DURATION.time()
     async def process(self, job: dict) -> dict:
         """Process a PDF parsing job."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._process_sync, job)
+
+    def _process_sync(self, job: dict) -> dict:
+        """Synchronous PDF processing (runs in thread)."""
         job_id = job["job_id"]
         document_id = job["document_id"]
         project_id = job["project_id"]
@@ -61,12 +67,14 @@ class PdfProcessor:
 
             # Download PDF from S3
             pdf_data = self._download_pdf(file_path)
+            logger.info("Downloaded PDF", job_id=job_id, size=len(pdf_data))
 
             # Extract text
             doc = fitz.open(stream=pdf_data, filetype="pdf")
             text, page_count = self._extract_text(doc)
 
             PAGES_PROCESSED.inc(page_count)
+            logger.info("Extracted text", job_id=job_id, pages=page_count)
 
             # Extract metadata (Story 2.3)
             metadata = doc.metadata or {}
@@ -76,7 +84,7 @@ class PdfProcessor:
             self._update_document_status(document_id, "processing", "detecting_chapters")
 
             # Detect chapters
-            chapters = await self.chapter_detector.detect(doc, text)
+            chapters = self.chapter_detector.detect_sync(doc, text)
 
             doc.close()
 
@@ -131,18 +139,11 @@ class PdfProcessor:
                         (chapter_id, document_id, project_id, i + 1, ch.title or f"Chapter {i + 1}", ch.text, word_count),
                     )
 
-                # Update project title from PDF metadata if available
-                # Status is 'draft' — not 'ready' until audio is generated
-                if pdf_title:
-                    cur.execute(
-                        "UPDATE projects SET title = %s, status = 'draft', updated_at = NOW() WHERE id = %s",
-                        (pdf_title, project_id),
-                    )
-                else:
-                    cur.execute(
-                        "UPDATE projects SET status = 'draft', updated_at = NOW() WHERE id = %s",
-                        (project_id,),
-                    )
+                # Set project status to draft (title already set from filename during upload)
+                cur.execute(
+                    "UPDATE projects SET status = 'draft', updated_at = NOW() WHERE id = %s",
+                    (project_id,),
+                )
 
             conn.commit()
             logger.info("Results saved to database", document_id=document_id, chapters=len(chapters))

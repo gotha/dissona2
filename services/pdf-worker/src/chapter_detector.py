@@ -25,9 +25,17 @@ class ChapterDetector:
         self.settings = settings
         self.last_method = "unknown"
     
+    def detect_sync(self, doc: fitz.Document, full_text: str) -> List[Chapter]:
+        """Detect chapters using the best available method (synchronous)."""
+        return self._detect(doc, full_text)
+
     async def detect(self, doc: fitz.Document, full_text: str) -> List[Chapter]:
-        """Detect chapters using the best available method."""
-        
+        """Detect chapters using the best available method (async wrapper)."""
+        return self._detect(doc, full_text)
+
+    def _detect(self, doc: fitz.Document, full_text: str) -> List[Chapter]:
+        """Core chapter detection logic."""
+
         # Strategy 1: Try TOC
         chapters = self._detect_from_toc(doc)
         if chapters and len(chapters) > 1:

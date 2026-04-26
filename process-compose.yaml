@@ -3,47 +3,27 @@ version: "0.5"
 log_location: .logs/process-compose.log
 
 processes:
-  infra:
-    command: docker compose up --wait postgres-auth postgres-api nats minio
-    readiness_probe:
-      exec:
-        command: docker compose ps --status running --format json
-      initial_delay_seconds: 2
-      period_seconds: 3
-
   auth:
-    command: nix develop ./services/auth --command just run
-    working_dir: services/auth
-    depends_on:
-      infra:
-        condition: process_healthy
+    command: bash -c "cd services/auth && nix develop --command just run"
     availability:
       restart: on_failure
       max_restarts: 3
 
   api:
-    command: nix develop ./services/api --command just run
-    working_dir: services/api
-    depends_on:
-      infra:
-        condition: process_healthy
+    command: bash -c "cd services/api && nix develop --command just run"
     availability:
       restart: on_failure
       max_restarts: 3
 
   pdf-worker:
-    command: nix develop ./services/pdf-worker --command just run
-    working_dir: services/pdf-worker
-    depends_on:
-      infra:
-        condition: process_healthy
+    command: bash -c "cd services/pdf-worker && nix develop --command just run"
     availability:
       restart: on_failure
-      max_restarts: 3
+      max_restarts: 10
+      backoff_seconds: 3
 
   frontend:
-    command: nix develop ./frontend --command just run
-    working_dir: frontend
+    command: bash -c "cd frontend && nix develop --command just run"
     depends_on:
       api:
         condition: process_started

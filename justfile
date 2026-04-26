@@ -121,7 +121,11 @@ docker-down:
 
 # Run all services with process-compose TUI
 run:
-    process-compose up --tui
+    process-compose up --tui --no-server
+
+# Truncate process-compose log file
+clean-logs:
+    truncate -s 0 .logs/process-compose.log
 
 # Start development environment (infra + watch services)
 dev:

@@ -32,7 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function ProcessingStatus({ status }: { status: string }) {
-  if (status === 'ready' || status === 'failed') return null;
+  if (status !== 'processing') return null;
 
   return (
     <div className="card p-6 mb-8">
@@ -146,7 +146,7 @@ export default function Project() {
     queryFn: () => api.get(`/api/projects/${id}`),
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      // Poll every 3s while processing
+      // Poll every 3s while processing, stop when draft/ready/failed
       return status === 'processing' ? 3000 : false;
     },
   });
@@ -154,7 +154,7 @@ export default function Project() {
   const { data: chapters } = useQuery<Chapter[]>({
     queryKey: ['project-chapters', id],
     queryFn: () => api.get(`/api/projects/${id}/chapters`),
-    enabled: project?.status === 'ready',
+    enabled: project?.status === 'draft' || project?.status === 'ready',
   });
 
   if (isLoading) {
