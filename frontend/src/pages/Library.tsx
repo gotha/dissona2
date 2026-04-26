@@ -65,17 +65,21 @@ function ProjectCard({ project }: { project: Project }) {
         </p>
       )}
       <div className="mt-4 flex items-center space-x-2">
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            project.status === 'ready'
-              ? 'bg-green-100 text-green-800'
-              : project.status === 'processing'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}
-        >
-          {project.status}
-        </span>
+        {project.status === 'processing' && (
+          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+            Processing...
+          </span>
+        )}
+        {project.status === 'ready' && (
+          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+            Ready to listen
+          </span>
+        )}
+        {project.status === 'failed' && (
+          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+            Failed
+          </span>
+        )}
       </div>
     </Link>
   );

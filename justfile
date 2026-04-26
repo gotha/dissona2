@@ -119,6 +119,10 @@ docker-down:
 
 # ============ DEVELOPMENT ============
 
+# Run all services with process-compose TUI
+run:
+    process-compose up --tui
+
 # Start development environment (infra + watch services)
 dev:
     @echo "Starting infrastructure..."

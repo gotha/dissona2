@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -7,6 +8,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function Upload() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -41,6 +43,7 @@ export default function Upload() {
     xhr.addEventListener('load', () => {
       if (xhr.status === 201) {
         const project = JSON.parse(xhr.responseText);
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
         navigate(`/project/${project.id}`);
       } else {
         try {

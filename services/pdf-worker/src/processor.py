@@ -127,19 +127,20 @@ class PdfProcessor:
                     word_count = len(ch.text.split())
                     cur.execute(
                         """INSERT INTO chapters (id, document_id, project_id, chapter_number, title, source_text, word_count, status)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, 'ready')""",
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')""",
                         (chapter_id, document_id, project_id, i + 1, ch.title or f"Chapter {i + 1}", ch.text, word_count),
                     )
 
                 # Update project title from PDF metadata if available
+                # Status is 'draft' — not 'ready' until audio is generated
                 if pdf_title:
                     cur.execute(
-                        "UPDATE projects SET title = %s, status = 'ready', updated_at = NOW() WHERE id = %s",
+                        "UPDATE projects SET title = %s, status = 'draft', updated_at = NOW() WHERE id = %s",
                         (pdf_title, project_id),
                     )
                 else:
                     cur.execute(
-                        "UPDATE projects SET status = 'ready', updated_at = NOW() WHERE id = %s",
+                        "UPDATE projects SET status = 'draft', updated_at = NOW() WHERE id = %s",
                         (project_id,),
                     )
 

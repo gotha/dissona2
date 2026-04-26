@@ -28,10 +28,17 @@
 
             # PDF processing
             tesseract
-            poppler_utils
+            poppler-utils
 
             # Task runner
             just
+
+            # Required by PyMuPDF binary wheel
+            stdenv.cc.cc.lib
+          ];
+
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+            pkgs.stdenv.cc.cc.lib
           ];
 
           shellHook = ''

@@ -67,3 +67,4 @@ result
 *.lcov
 lcov.info
 *-lcov.info
+.logs/

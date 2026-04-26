@@ -1,0 +1,54 @@
+version: "0.5"
+
+log_location: .logs/process-compose.log
+
+processes:
+  infra:
+    command: docker compose up --wait postgres-auth postgres-api nats minio
+    readiness_probe:
+      exec:
+        command: docker compose ps --status running --format json
+      initial_delay_seconds: 2
+      period_seconds: 3
+
+  auth:
+    command: nix develop ./services/auth --command just run
+    working_dir: services/auth
+    depends_on:
+      infra:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+      max_restarts: 3
+
+  api:
+    command: nix develop ./services/api --command just run
+    working_dir: services/api
+    depends_on:
+      infra:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+      max_restarts: 3
+
+  pdf-worker:
+    command: nix develop ./services/pdf-worker --command just run
+    working_dir: services/pdf-worker
+    depends_on:
+      infra:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+      max_restarts: 3
+
+  frontend:
+    command: nix develop ./frontend --command just run
+    working_dir: frontend
+    depends_on:
+      api:
+        condition: process_started
+      auth:
+        condition: process_started
+    availability:
+      restart: on_failure
+      max_restarts: 3

@@ -17,6 +17,9 @@
             # Task runner (required for all services)
             just
 
+            # Process orchestration
+            process-compose
+
             # Docker (infrastructure)
             docker-compose
 

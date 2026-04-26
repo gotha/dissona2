@@ -1,5 +1,6 @@
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '../api/client';
 
@@ -45,8 +46,100 @@ function ProcessingStatus({ status }: { status: string }) {
   );
 }
 
+function EditableTitle({ title, projectId }: { title: string; projectId: string }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(title);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => { setValue(title); }, [title]);
+  useEffect(() => { if (editing) inputRef.current?.select(); }, [editing]);
+
+  const mutation = useMutation({
+    mutationFn: (newTitle: string) =>
+      api.put(`/api/projects/${projectId}`, { title: newTitle }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setEditing(false);
+    },
+  });
+
+  const handleSubmit = () => {
+    const trimmed = value.trim();
+    if (trimmed && trimmed !== title) {
+      mutation.mutate(trimmed);
+    } else {
+      setValue(title);
+      setEditing(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSubmit();
+            if (e.key === 'Escape') { setValue(title); setEditing(false); }
+          }}
+          className="text-2xl font-bold text-gray-900 border-b-2 border-indigo-500 outline-none bg-transparent flex-1 py-0"
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={mutation.isPending}
+          className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
+          {mutation.isPending ? '...' : 'OK'}
+        </button>
+        <button
+          onClick={() => { setValue(title); setEditing(false); }}
+          className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group flex items-center gap-2">
+      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      <button
+        onClick={() => setEditing(true)}
+        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-gray-600"
+        title="Edit title"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export default function Project() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/api/projects/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      navigate('/library');
+    },
+  });
+
+  const handleDelete = () => {
+    if (window.confirm('Delete this project? This cannot be undone.')) {
+      deleteMutation.mutate();
+    }
+  };
 
   const { data: project, isLoading } = useQuery<ProjectDetail>({
     queryKey: ['project', id],
@@ -82,11 +175,18 @@ export default function Project() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <Link to="/library" className="text-sm text-indigo-600 hover:text-indigo-800">← Library</Link>
+        <button
+          onClick={handleDelete}
+          disabled={deleteMutation.isPending}
+          className="text-sm text-red-500 hover:text-red-700"
+        >
+          {deleteMutation.isPending ? 'Deleting...' : 'Delete project'}
+        </button>
       </div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
+        <EditableTitle title={project.title} projectId={project.id} />
         {project.description && (
           <p className="mt-2 text-gray-500">{project.description}</p>
         )}
@@ -116,11 +216,16 @@ export default function Project() {
                     <p className="text-sm text-gray-500">{ch.word_count.toLocaleString()} words</p>
                   )}
                 </div>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  ch.status === 'ready' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {ch.status}
-                </span>
+                {ch.status === 'ready' && (
+                  <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                    Audio ready
+                  </span>
+                )}
+                {ch.status === 'generating' && (
+                  <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                    Generating audio...
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -128,7 +233,7 @@ export default function Project() {
       )}
 
       {/* Actions */}
-      {project.status === 'ready' && (
+      {(project.status === 'draft' || project.status === 'ready') && (
         <div className="flex space-x-4">
           <button className="btn-primary">Generate Audiobook</button>
           <button className="btn-secondary">Generate Podcast</button>
