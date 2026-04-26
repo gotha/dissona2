@@ -18,6 +18,7 @@ pub fn create_test_token(user_id: Uuid) -> String {
         sub: user_id.to_string(),
         email: "test@example.com".to_string(),
         name: "Test User".to_string(),
+        has_completed_first_upload: false,
         iat: now,
         exp: now + 3600,
         jti: Uuid::new_v4().to_string(),
