@@ -16,9 +16,14 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     // Projects
                     .route("/projects", web::get().to(projects::list_projects))
                     .route("/projects", web::post().to(projects::create_project))
+                    .route("/projects/upload", web::post().to(projects::upload_project))
                     .route("/projects/{id}", web::get().to(projects::get_project))
                     .route("/projects/{id}", web::put().to(projects::update_project))
                     .route("/projects/{id}", web::delete().to(projects::delete_project))
+                    .route(
+                        "/projects/{id}/chapters",
+                        web::get().to(projects::list_chapters),
+                    )
                     .route(
                         "/projects/{id}/documents",
                         web::post().to(projects::add_document),

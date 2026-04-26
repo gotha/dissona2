@@ -10,4 +10,5 @@ pub mod error;
 pub mod handlers;
 pub mod models;
 pub mod nats;
+pub mod s3;
 pub mod telemetry;

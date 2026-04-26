@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     # NATS
     nats_url: str = "nats://localhost:4222"
 
+    # Database
+    database_url: str = "postgresql://dissona:dissona@localhost:15011/dissona"
+
     # S3 Storage
     s3_endpoint: str = "http://localhost:9000"
     s3_access_key: str = "minioadmin"

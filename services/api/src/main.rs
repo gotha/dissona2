@@ -7,6 +7,8 @@ use tracing_actix_web::TracingLogger;
 use dissona_api::auth::JwtValidator;
 use dissona_api::config::Settings;
 use dissona_api::handlers;
+use dissona_api::nats as app_nats;
+use dissona_api::s3::StorageClient;
 use dissona_api::telemetry;
 
 #[actix_web::main]
@@ -39,6 +41,15 @@ async fn main() -> anyhow::Result<()> {
     let nats_jetstream = async_nats::jetstream::new(nats_client);
     info!("Connected to NATS");
 
+    // Initialize NATS JetStream streams
+    app_nats::init_streams(&nats_jetstream).await.map_err(|e| anyhow::anyhow!("NATS stream init: {}", e))?;
+    info!("NATS streams initialized");
+
+    // S3 storage client
+    let storage_client = StorageClient::new(&settings.s3).await;
+    storage_client.ensure_buckets().await.map_err(|e| anyhow::anyhow!("S3 bucket init: {}", e))?;
+    info!("S3 storage initialized");
+
     // JWT validator
     let jwt_validator = JwtValidator::new(&settings.jwt.secret);
     info!("JWT validator initialized");
@@ -62,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(nats_jetstream.clone()))
             .app_data(web::Data::new(jwt_validator.clone()))
+            .app_data(web::Data::new(storage_client.clone()))
             .configure(handlers::configure)
     })
     .bind(&server_addr)?

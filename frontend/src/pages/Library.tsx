@@ -87,6 +87,10 @@ export default function Library() {
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: () => api.get<Project[]>('/api/projects'),
+    refetchInterval: (query) => {
+      const hasProcessing = query.state.data?.some((p: Project) => p.status === 'processing');
+      return hasProcessing ? 3000 : false;
+    },
   });
 
   const trySampleMutation = useMutation({

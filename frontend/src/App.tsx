@@ -9,7 +9,7 @@ import Settings from './pages/Settings';
 import Subscription from './pages/Subscription';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
-import GuidedUpload from './components/onboarding/GuidedUpload';
+import Upload from './pages/Upload';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -51,8 +51,8 @@ export default function App() {
         <Route index element={<Navigate to="/library" replace />} />
         <Route path="library" element={<Library />} />
         <Route path="project/:id" element={<Project />} />
-        <Route path="upload" element={<GuidedUpload />} />
-        <Route path="welcome" element={<GuidedUpload />} />
+        <Route path="upload" element={<Upload />} />
+        <Route path="welcome" element={<Upload />} />
         <Route path="settings" element={<Settings />} />
         <Route path="settings/subscription" element={<Subscription />} />
       </Route>
