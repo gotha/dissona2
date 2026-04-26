@@ -20,6 +20,9 @@ pub struct Claims {
     pub email: String,
     /// User name
     pub name: String,
+    /// Whether user has completed first upload
+    #[serde(default)]
+    pub has_completed_first_upload: bool,
     /// Issued at (Unix timestamp)
     pub iat: i64,
     /// Expiration (Unix timestamp)

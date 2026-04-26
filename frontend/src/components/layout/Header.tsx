@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
 export default function Header() {
-  const location = useLocation();
   const { user, logout, isLoading } = useAuthStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -18,11 +17,6 @@ export default function Header() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const navItems = [
-    { path: '/', label: 'Library' },
-    { path: '/settings', label: 'Settings' },
-  ];
 
   const handleLogout = async () => {
     setIsMenuOpen(false);
@@ -42,26 +36,9 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/library" className="flex items-center">
             <span className="text-2xl font-bold text-white">Dissona</span>
           </Link>
-
-          {/* Navigation */}
-          <nav className="hidden md:flex space-x-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  location.pathname === item.path
-                    ? 'text-white bg-neutral-800'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
 
           {/* User menu */}
           <div className="relative" ref={menuRef}>

@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useEffect } from 'react';
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8081';
+const AUTH_URL = import.meta.env.VITE_AUTH_URL || '';
 
 export default function Login() {
   const navigate = useNavigate();

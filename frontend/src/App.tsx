@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Library from './pages/Library';
 import Project from './pages/Project';
 import Settings from './pages/Settings';
+import Subscription from './pages/Subscription';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import GuidedUpload from './components/onboarding/GuidedUpload';
@@ -47,19 +48,13 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route
-          index
-          element={
-            <OnboardingRedirect>
-              <Home />
-            </OnboardingRedirect>
-          }
-        />
+        <Route index element={<Navigate to="/library" replace />} />
         <Route path="library" element={<Library />} />
         <Route path="project/:id" element={<Project />} />
         <Route path="upload" element={<GuidedUpload />} />
         <Route path="welcome" element={<GuidedUpload />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="settings/subscription" element={<Subscription />} />
       </Route>
     </Routes>
   );
